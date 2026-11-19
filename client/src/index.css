@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #070b14;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom 3D Card Depth and Glassmorphism */
+.glass-panel {
+  background: rgba(17, 27, 46, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(45, 212, 191, 0.15);
+}
+
+.card-3d {
+  background: linear-gradient(135deg, rgba(24, 36, 60, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 2px 0 0 rgba(45, 212, 191, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 3px 0 0 rgba(45, 212, 191, 0.4);
+  border-color: rgba(45, 212, 191, 0.3);
+}
+
+.btn-3d-primary {
+  background: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  box-shadow: 0 4px 0 0 #065f46, 0 6px 16px -2px rgba(16, 185, 129, 0.4);
+  transition: all 0.15s ease;
+}
+
+.btn-3d-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 0 #065f46, 0 8px 20px -2px rgba(16, 185, 129, 0.5);
+}
+
+.btn-3d-primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #065f46, 0 3px 8px -1px rgba(16, 185, 129, 0.4);
+}
+
+.btn-3d-secondary {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 3px 0 0 #0a0f1d, 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+.btn-3d-secondary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(45, 212, 191, 0.3);
+  box-shadow: 0 4px 0 0 #0a0f1d, 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.btn-3d-secondary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #0a0f1d;
+}
+
+/* Leaflet container and tile styling adjustments */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 340px !important;
+  border-radius: 0.75rem;
+  background-color: #0b1120 !important;
+  z-index: 10;
+}
+
+/* Ensure tile images render with proper bounds and crisp visibility */
+.leaflet-tile {
+  visibility: inherit !important;
+}
+
+/* Dark mode custom styled popups */
+.leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(45, 212, 191, 0.3) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-popup-tip {
+  background: #0f172a !important;
+  border: 1px solid rgba(45, 212, 191, 0.3) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 4px 6px !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0c1322;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334870;
+}

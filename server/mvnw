@@ -1,0 +1,33 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Maven Wrapper script for Linux / macOS / Unix
+# ----------------------------------------------------------------------------
+
+set -e
+
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+BASE_DIR=$(dirname "$0")
+WRAPPER_JAR="$BASE_DIR/.mvn/wrapper/maven-wrapper.jar"
+PROPERTIES_FILE="$BASE_DIR/.mvn/wrapper/maven-wrapper.properties"
+
+if [ -f "$WRAPPER_JAR" ]; then
+  exec java -jar "$WRAPPER_JAR" "$@"
+fi
+
+if [ -f "$PROPERTIES_FILE" ]; then
+  DIST_URL=$(grep 'distributionUrl' "$PROPERTIES_FILE" | cut -d'=' -f2 | tr -d '\r')
+  if [ -n "$DIST_URL" ]; then
+    echo "Downloading Maven from $DIST_URL ..."
+    MAVEN_TMP_DIR=$(mktemp -d)
+    curl -fsSL "$DIST_URL" -o "$MAVEN_TMP_DIR/maven.zip"
+    unzip -q "$MAVEN_TMP_DIR/maven.zip" -d "$MAVEN_TMP_DIR"
+    MAVEN_BIN=$(find "$MAVEN_TMP_DIR" -name mvn -type f -perm -u+x | head -n 1)
+    exec "$MAVEN_BIN" "$@"
+  fi
+fi
+
+echo "Error: Neither 'mvn' nor Maven Wrapper is available." >&2
+exit 1

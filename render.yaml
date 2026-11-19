@@ -1,0 +1,49 @@
+services:
+  # 1. Spring Boot Backend Web Service (Free Tier)
+  - type: web
+    name: sharebite-backend
+    env: docker
+    dockerContext: ./server
+    dockerfilePath: ./server/Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ALLOWED_ORIGINS
+        value: "http://localhost:5173,https://*.pages.dev,https://*.vercel.app,https://*.onrender.com"
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # 2. React + Vite Frontend Static Site (Free Tier)
+  - type: web
+    name: sharebite-frontend
+    env: static
+    plan: free
+    region: oregon
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: sharebite-backend
+          property: host
