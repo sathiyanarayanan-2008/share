@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Vitest Unit Tests
         run: npm test
@@ -58,9 +58,11 @@ jobs:
           mongodb-version: '7.0'
 
       - name: Run Maven Tests
-        run: ./mvnw test -B
+        run: |
+          chmod +x mvnw || true
+          mvn test -B
         env:
           SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/sharebite_test
 
       - name: Build Executable JAR
-        run: ./mvnw package -DskipTests -B
+        run: mvn package -DskipTests -B
