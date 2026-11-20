@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Dynamically use cloud production backend URL if configured (e.g. on Vercel/Cloudflare Pages),
 // or default to relative '/api' which Vite proxies locally
-const rawBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '/api';
+const env = (import.meta as any).env || {};
+const rawBaseUrl: string = env.VITE_API_URL || env.VITE_API_BASE_URL || '/api';
 const baseURL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
 
 const api = axios.create({
