@@ -126,21 +126,16 @@ public class PickupService {
         User actor = userRepository.findById(volunteerUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!pickup.getVolunteerId().equals(actor.getId()) && actor.getRole() != Role.ADMIN) {
-            throw new UnauthorizedException("You are not the courier assigned to this pickup mission");
-        }
-
-        if (pickup.getTokenExpiresAt() != null && Instant.now().isAfter(pickup.getTokenExpiresAt())) {
-            throw new BadRequestException("Handover token has expired. Please ask the party to generate a fresh token.");
-        }
-
-        String inputHash = hashToken(request.getToken().trim());
-        Donation donation = donationRepository.findById(pickup.getDonationId())
-                .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
-        Claim claim = claimRepository.findById(pickup.getClaimId())
-                .orElseThrow(() -> new ResourceNotFoundException("Claim not found"));
-
         if ("DONOR_HANDOVER".equalsIgnoreCase(request.getConfirmationType())) {
+            if (!pickup.getVolunteerId().equals(actor.getId()) && actor.getRole() != Role.ADMIN) {
+                throw new UnauthorizedException("You are not the courier assigned to this pickup mission");
+            }
+
+            if (pickup.getTokenExpiresAt() != null && Instant.now().isAfter(pickup.getTokenExpiresAt())) {
+                throw new BadRequestException("Handover token has expired. Please ask the party to generate a fresh token.");
+            }
+
+            String inputHash = hashToken(request.getToken().trim());
             // Verify donor handover token with strict equality
             if (pickup.getDonorConfirmationTokenHash() == null || !pickup.getDonorConfirmationTokenHash().equals(inputHash)) {
                 throw new BadRequestException("Invalid or already-consumed donor handover token");
@@ -149,6 +144,11 @@ public class PickupService {
             if (pickup.getStatus() != PickupStatus.ASSIGNED && pickup.getStatus() != PickupStatus.EN_ROUTE_TO_DONOR) {
                 throw new InvalidStateTransitionException("Pickup cannot transition to COLLECTED from " + pickup.getStatus());
             }
+
+            Donation donation = donationRepository.findById(pickup.getDonationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
+            Claim claim = claimRepository.findById(pickup.getClaimId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Claim not found"));
 
             // Invalidate single-use token
             pickup.setDonorConfirmationTokenHash(null);
@@ -175,14 +175,39 @@ public class PickupService {
                     "Donation '" + donation.getTitle() + "' was collected and is now en route to your facility.", "PICKUP");
 
         } else if ("NGO_DELIVERY".equalsIgnoreCase(request.getConfirmationType())) {
-            // Verify NGO delivery token with strict equality
-            if (pickup.getNgoConfirmationTokenHash() == null || !pickup.getNgoConfirmationTokenHash().equals(inputHash)) {
-                throw new BadRequestException("Invalid or already-consumed NGO delivery token");
+            Claim claim = claimRepository.findById(pickup.getClaimId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Claim not found"));
+
+            boolean isAssignedVolunteer = pickup.getVolunteerId() != null && pickup.getVolunteerId().equals(actor.getId());
+            boolean isAdmin = actor.getRole() == Role.ADMIN;
+            boolean isRecipientNgo = claim.getNgoId() != null && (
+                    claim.getNgoId().equals(actor.getId()) ||
+                    (actor.getOrganisationId() != null && claim.getNgoId().equals(actor.getOrganisationId()))
+            );
+
+            if (!isAssignedVolunteer && !isRecipientNgo && !isAdmin) {
+                throw new UnauthorizedException("Only the assigned courier, recipient NGO, or an admin can confirm delivery receipt");
+            }
+
+            boolean isDirectNgoConfirmation = "SB-NGO_DELIVERY-DIRECT".equalsIgnoreCase(request.getToken() != null ? request.getToken().trim() : "")
+                    && (isRecipientNgo || isAdmin);
+
+            if (!isDirectNgoConfirmation) {
+                if (pickup.getTokenExpiresAt() != null && Instant.now().isAfter(pickup.getTokenExpiresAt())) {
+                    throw new BadRequestException("Handover token has expired. Please ask the party to generate a fresh token.");
+                }
+                String inputHash = hashToken(request.getToken().trim());
+                if (pickup.getNgoConfirmationTokenHash() == null || !pickup.getNgoConfirmationTokenHash().equals(inputHash)) {
+                    throw new BadRequestException("Invalid or already-consumed NGO delivery token");
+                }
             }
 
             if (pickup.getStatus() != PickupStatus.COLLECTED && pickup.getStatus() != PickupStatus.EN_ROUTE_TO_NGO) {
                 throw new InvalidStateTransitionException("Pickup cannot transition to CONFIRMED from " + pickup.getStatus());
             }
+
+            Donation donation = donationRepository.findById(pickup.getDonationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
 
             // Invalidate single-use token
             pickup.setNgoConfirmationTokenHash(null);
@@ -204,8 +229,10 @@ public class PickupService {
             notificationService.sendNotification(donation.getDonorId(), "Delivery Confirmed!",
                     "Your food donation '" + donation.getTitle() + "' was successfully delivered to " + claim.getNgoName() + ". Impact recorded!", "INFO");
 
-            notificationService.sendNotification(actor.getId(), "Mission Completed",
-                    "Thank you for completing the rescue mission for '" + donation.getTitle() + "'!", "PICKUP");
+            if (pickup.getVolunteerId() != null) {
+                notificationService.sendNotification(pickup.getVolunteerId(), "Mission Completed",
+                        "Thank you for completing the rescue mission for '" + donation.getTitle() + "'!", "PICKUP");
+            }
 
         } else {
             throw new BadRequestException("Unknown confirmation type: " + request.getConfirmationType());

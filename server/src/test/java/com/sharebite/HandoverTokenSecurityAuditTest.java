@@ -64,8 +64,6 @@ class HandoverTokenSecurityAuditTest {
     void testSubstringBypassTokenRejected() {
         when(pickupRepository.findById("pk-audit-1")).thenReturn(Optional.of(pickup));
         when(userRepository.findById("vol-courier-1")).thenReturn(Optional.of(assignedVolunteer));
-        when(donationRepository.findById("don-200")).thenReturn(Optional.of(new Donation()));
-        when(claimRepository.findById("clm-100")).thenReturn(Optional.of(new Claim()));
 
         // Malicious payload attempting substring bypass
         HandoverVerifyRequest maliciousReq = new HandoverVerifyRequest(
